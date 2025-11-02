@@ -6,7 +6,11 @@ from typing import Optional
 import pandas as pd
 
 from src.data.data_cleaner import DataCleaner
+<<<<<<< HEAD
 from src.models.city import City, CityStats, PropertyTypeStats
+=======
+from src.models.city import City, CityStats
+>>>>>>> b635870c043313b779e3bb0e5486256e81c809f2
 from src.utils.config import REPORTS_DIR
 
 logging.basicConfig(level=logging.INFO)
@@ -60,7 +64,11 @@ class PriceAnalyzer:
             logger.warning(f"Aucune donnée trouvée pour {city_name}")
             return None
 
+<<<<<<< HEAD
         # Calculs statistiques globaux
+=======
+        # Calculs statistiques
+>>>>>>> b635870c043313b779e3bb0e5486256e81c809f2
         stats = CityStats(
             prix_moyen_m2=float(city_df["prix_m2"].mean()),
             prix_median_m2=float(city_df["prix_m2"].median()),
@@ -72,6 +80,7 @@ class PriceAnalyzer:
 
         # Statistiques par type de bien si disponible
         if "type_local" in city_df.columns:
+<<<<<<< HEAD
             # Appartements
             apparts = city_df[city_df["type_local"] == "Appartement"]
             if not apparts.empty:
@@ -93,6 +102,15 @@ class PriceAnalyzer:
                     nombre_transactions=len(maisons),
                     surface_moyenne=float(maisons["surface_reelle_bati"].mean()),
                 )
+=======
+            apparts = city_df[city_df["type_local"] == "Appartement"]
+            if not apparts.empty:
+                stats.prix_moyen_appartement_m2 = float(apparts["prix_m2"].mean())
+
+            maisons = city_df[city_df["type_local"] == "Maison"]
+            if not maisons.empty:
+                stats.prix_moyen_maison_m2 = float(maisons["prix_m2"].mean())
+>>>>>>> b635870c043313b779e3bb0e5486256e81c809f2
 
         return stats
 
@@ -117,6 +135,7 @@ class PriceAnalyzer:
                 city_df = self.df[self.df["nom_commune"] == city_name]
                 dept_code = city_df["code_departement"].iloc[0]
 
+<<<<<<< HEAD
                 result = {
                     "ville": city_name,
                     "code_departement": dept_code,
@@ -165,6 +184,22 @@ class PriceAnalyzer:
                     })
 
                 results.append(result)
+=======
+                results.append(
+                    {
+                        "ville": city_name,
+                        "code_departement": dept_code,
+                        "prix_moyen_m2": stats.prix_moyen_m2,
+                        "prix_median_m2": stats.prix_median_m2,
+                        "prix_min_m2": stats.prix_min_m2,
+                        "prix_max_m2": stats.prix_max_m2,
+                        "nombre_transactions": stats.nombre_transactions,
+                        "surface_moyenne": stats.surface_moyenne,
+                        "prix_appart_m2": stats.prix_moyen_appartement_m2,
+                        "prix_maison_m2": stats.prix_moyen_maison_m2,
+                    }
+                )
+>>>>>>> b635870c043313b779e3bb0e5486256e81c809f2
 
         df_results = pd.DataFrame(results)
         df_results = df_results.sort_values("prix_moyen_m2", ascending=False)
