@@ -30,3 +30,6 @@ jupyter>=1.0.0
 
 # Progress bars
 tqdm>=4.65.0
+
+# CLI and formatting
+rich>=13.0.0  # For beautiful console output

@@ -25,6 +25,37 @@ class PropertyTypeStats:
 
 
 @dataclass
+class RentStats:
+    """Statistiques de loyers pour une ville (basé sur Carte des loyers)."""
+
+    loyer_moyen_m2: Optional[float] = None  # loypredm2
+    loyer_bas_m2: Optional[float] = None  # lwr_IPm2 (borne basse intervalle prédiction)
+    loyer_haut_m2: Optional[float] = None  # upr_IPm2 (borne haute intervalle prédiction)
+    type_prediction: Optional[str] = None  # TYPPRED: "Commune", "epci" ou "maile"
+    nb_observations_commune: Optional[int] = None  # nbobs_com
+    nb_observations_maille: Optional[int] = None  # nbobs_mail
+    r2_ajuste: Optional[float] = None  # R2_adj (coefficient de détermination)
+    id_maille: Optional[str] = None  # id_zone
+
+    def __repr__(self) -> str:
+        if self.loyer_moyen_m2:
+            return (
+                f"RentStats(moyen={self.loyer_moyen_m2:.2f}€/m², "
+                f"bas={self.loyer_bas_m2:.2f}€/m², haut={self.loyer_haut_m2:.2f}€/m², "
+                f"type={self.type_prediction}, obs={self.nb_observations_commune})"
+            )
+        return "RentStats(no data)"
+
+    @property
+    def is_reliable(self) -> bool:
+        """Vérifie si les données sont fiables selon les critères de la Carte des loyers."""
+        if not self.r2_ajuste or not self.nb_observations_commune:
+            return False
+        # Critères de fiabilité selon la documentation
+        return self.r2_ajuste >= 0.5 and self.nb_observations_commune >= 30
+
+
+@dataclass
 class CityStats:
     """Statistiques immobilières d'une ville."""
 
@@ -36,6 +67,7 @@ class CityStats:
     surface_moyenne: float
     appartements: Optional[PropertyTypeStats] = None
     maisons: Optional[PropertyTypeStats] = None
+    loyers: Optional[RentStats] = None  # Ajout des statistiques de loyers
 
     def __repr__(self) -> str:
         base = (
@@ -46,6 +78,8 @@ class CityStats:
             base += f", appart={self.appartements.prix_moyen_m2:.0f}€/m²"
         if self.maisons and self.maisons.prix_moyen_m2:
             base += f", maison={self.maisons.prix_moyen_m2:.0f}€/m²"
+        if self.loyers and self.loyers.loyer_moyen_m2:
+            base += f", loyer={self.loyers.loyer_moyen_m2:.2f}€/m²/mois"
         return base + ")"
 
 

@@ -218,3 +218,6 @@ outputs/visualizations/
 *.csv
 !data/.gitkeep
 !outputs/.gitkeep
+
+# Configuration personnalisée (peut contenir des URLs privées)
+config_urls.py

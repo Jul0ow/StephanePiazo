@@ -244,6 +244,38 @@ downloader = DVFDownloader()
 downloader.download_idf_data(year=2024)
 ```
 
+### Configurer des URLs Personnalisées
+
+Si les URLs par défaut ne fonctionnent pas ou ont changé :
+
+```bash
+# 1. Créer le fichier de configuration
+cp config_urls.example.py config_urls.py
+
+# 2. Éditer config_urls.py et ajouter vos URLs
+```
+
+```python
+# Dans config_urls.py
+RENT_CUSTOM_URLS = {
+    2024: "https://static.data.gouv.fr/resources/.../loyers.csv",
+}
+
+DVF_CUSTOM_URLS = {
+    2023: "https://files.data.gouv.fr/geo-dvf/.../departements/{dept}.csv.gz",
+}
+```
+
+```python
+# Les URLs custom sont automatiquement utilisées
+from src.data.rent_downloader import RentDownloader
+
+downloader = RentDownloader()
+downloader.download_rent_data(year=2024)  # Utilise l'URL custom
+```
+
+**Documentation complète** : [docs/CUSTOM_URLS.md](../docs/CUSTOM_URLS.md)
+
 ### Exporter les Résultats au Format Excel
 
 ```python
@@ -286,11 +318,13 @@ rm -rf data/raw/*
 
 ### Problèmes Courants
 
-#### Erreur: "API DVF ne répond pas"
-**Cause**: Le service data.gouv.fr peut être temporairement indisponible
+#### Erreur: "API DVF ne répond pas" ou "Erreur téléchargement"
+**Cause**: Le service data.gouv.fr peut être temporairement indisponible ou l'URL a changé
 **Solution**: 
 - Vérifier l'état du service: https://status.data.gouv.fr/
+- Vérifier les URLs: `python scripts/check_urls.py`
 - Réessayer après quelques minutes
+- Configurer des URLs custom (voir [docs/CUSTOM_URLS.md](../docs/CUSTOM_URLS.md))
 - Utiliser les données en cache si disponibles
 
 #### Erreur: "MemoryError lors du traitement"
@@ -341,6 +375,11 @@ print(df.info())
 3. **Utiliser le debugger Python**:
 ```python
 import pdb; pdb.set_trace()  # Point d'arrêt
+```
+
+4. **Vérifier les URLs configurées**:
+```bash
+python scripts/check_urls.py
 ```
 
 ---

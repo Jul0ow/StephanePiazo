@@ -10,7 +10,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from src.utils.config import DVF_BASE_URL, IDF_DEPARTMENTS, RAW_DATA_DIR
+from src.utils.config import DVF_BASE_URL, DVF_CUSTOM_URLS, IDF_DEPARTMENTS, RAW_DATA_DIR
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,18 +29,33 @@ class DVFDownloader:
         self.data_dir = data_dir or RAW_DATA_DIR
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-    def download_department_data(self, department: str, year: int) -> Optional[Path]:
+    def download_department_data(
+        self, department: str, year: int, custom_url: Optional[str] = None
+    ) -> Optional[Path]:
         """
         Télécharge les données DVF pour un département et une année.
 
         Args:
             department: Code département (ex: "75" pour Paris)
             year: Année des données (ex: 2023)
+            custom_url: URL personnalisée (optionnel, sinon utilise DVF_BASE_URL)
 
         Returns:
             Chemin vers le fichier téléchargé (décompressé), ou None en cas d'erreur
         """
-        url = f"{DVF_BASE_URL}/{year}/departements/{department}.csv.gz"
+        # Déterminer l'URL à utiliser
+        if custom_url:
+            url = custom_url
+        elif year in DVF_CUSTOM_URLS:
+            custom_config = DVF_CUSTOM_URLS[year]
+            if isinstance(custom_config, dict) and department in custom_config:
+                url = custom_config[department]
+            elif isinstance(custom_config, str):
+                url = custom_config.format(dept=department)
+            else:
+                url = f"{DVF_BASE_URL}/{year}/departements/{department}.csv.gz"
+        else:
+            url = f"{DVF_BASE_URL}/{year}/departements/{department}.csv.gz"
         output_file = self.data_dir / f"dvf_{year}_{department}.csv"
         gz_file = self.data_dir / f"dvf_{year}_{department}.csv.gz"
 
@@ -95,12 +110,15 @@ class DVFDownloader:
                 output_file.unlink()
             return None
 
-    def download_idf_data(self, year: int) -> dict[str, Path]:
+    def download_idf_data(
+        self, year: int, custom_urls: Optional[dict[str, str]] = None
+    ) -> dict[str, Path]:
         """
         Télécharge les données DVF pour tous les départements d'Île-de-France.
 
         Args:
             year: Année des données
+            custom_urls: Dictionnaire {code_dept: url} pour URLs personnalisées (optionnel)
 
         Returns:
             Dictionnaire {code_dept: chemin_fichier}
@@ -109,7 +127,8 @@ class DVFDownloader:
 
         downloaded_files = {}
         for dept_code in IDF_DEPARTMENTS.keys():
-            file_path = self.download_department_data(dept_code, year)
+            custom_url = custom_urls.get(dept_code) if custom_urls else None
+            file_path = self.download_department_data(dept_code, year, custom_url)
             if file_path:
                 downloaded_files[dept_code] = file_path
 
