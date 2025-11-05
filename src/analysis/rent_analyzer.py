@@ -67,17 +67,22 @@ class RentAnalyzer:
     def get_city_rent_stats(
         self, 
         city_name: Optional[str] = None, 
-        insee_code: Optional[str] = None
-    ) -> Optional[RentStats]:
+        insee_code: Optional[str] = None,
+        property_type: Optional[str] = None
+    ) -> Optional[RentStats | dict[str, RentStats]]:
         """
         Récupère les statistiques de loyers pour une ville.
+        
+        Si les données sont séparées par type de bien et property_type=None,
+        retourne un dict {"appartements": RentStats, "maisons": RentStats}.
 
         Args:
             city_name: Nom de la commune (optionnel si insee_code fourni)
             insee_code: Code INSEE de la commune (optionnel si city_name fourni)
+            property_type: Type de bien (« appartements », « maisons », ou None pour tous)
 
         Returns:
-            RentStats ou None si la commune n'est pas trouvée
+            RentStats, dict[str, RentStats], ou None si la commune n'est pas trouvée
         """
         data = self.load_idf_data()
 
@@ -97,11 +102,42 @@ class RentAnalyzer:
                 f"{'INSEE ' + insee_code if insee_code else city_name}"
             )
             return None
-
-        # Prendre la première ligne (devrait être unique par commune)
+        
+        # Si property_type spécifié, filtrer par type
+        if property_type and "type_bien" in filtered.columns:
+            filtered = filtered[filtered["type_bien"] == property_type]
+            if filtered.empty:
+                logger.warning(
+                    f"Aucune donnée {property_type} pour "
+                    f"{'INSEE ' + insee_code if insee_code else city_name}"
+                )
+                return None
+        
+        # Si les données contiennent plusieurs types de bien et pas de filtre
+        if property_type is None and "type_bien" in filtered.columns:
+            types_dispo = filtered["type_bien"].unique()
+            if len(types_dispo) > 1:
+                # Retourner un dict avec les stats par type
+                result = {}
+                for ptype in types_dispo:
+                    row = filtered[filtered["type_bien"] == ptype].iloc[0]
+                    result[ptype] = self._create_rent_stats(row)
+                return result
+        
+        # Cas simple: une seule ligne ou type unique
         row = filtered.iloc[0]
-
-        # Créer l'objet RentStats
+        return self._create_rent_stats(row)
+    
+    def _create_rent_stats(self, row: pd.Series) -> RentStats:
+        """
+        Crée un objet RentStats à partir d'une ligne de données.
+        
+        Args:
+            row: Ligne du DataFrame
+            
+        Returns:
+            RentStats
+        """
         return RentStats(
             loyer_moyen_m2=float(row["loypredm2"]) if pd.notna(row["loypredm2"]) else None,
             loyer_bas_m2=float(row["lwr_IPm2"]) if pd.notna(row["lwr_IPm2"]) else None,
@@ -163,12 +199,13 @@ class RentAnalyzer:
 
         return pd.concat(results, ignore_index=True)
 
-    def compare_cities(self, city_names: list[str]) -> pd.DataFrame:
+    def compare_cities(self, city_names: list[str], property_type: Optional[str] = None) -> pd.DataFrame:
         """
         Compare les loyers de plusieurs villes.
 
         Args:
             city_names: Liste des noms de communes à comparer
+            property_type: Type de bien (« appartements », « maisons », ou None)
 
         Returns:
             DataFrame avec les comparaisons
@@ -176,10 +213,25 @@ class RentAnalyzer:
         comparisons = []
 
         for city_name in city_names:
-            rent_stats = self.get_city_rent_stats(city_name=city_name)
-            if rent_stats:
+            rent_stats = self.get_city_rent_stats(city_name=city_name, property_type=property_type)
+            
+            # Si dict (plusieurs types), aplatir les données
+            if isinstance(rent_stats, dict):
+                for ptype, stats in rent_stats.items():
+                    comparisons.append({
+                        "commune": city_name,
+                        "type_bien": ptype,
+                        "loyer_moyen_m2": stats.loyer_moyen_m2,
+                        "loyer_bas_m2": stats.loyer_bas_m2,
+                        "loyer_haut_m2": stats.loyer_haut_m2,
+                        "type_prediction": stats.type_prediction,
+                        "fiable": stats.is_reliable,
+                        "nb_observations": stats.nb_observations_commune,
+                    })
+            elif rent_stats:
                 comparisons.append({
                     "commune": city_name,
+                    "type_bien": property_type or "tous",
                     "loyer_moyen_m2": rent_stats.loyer_moyen_m2,
                     "loyer_bas_m2": rent_stats.loyer_bas_m2,
                     "loyer_haut_m2": rent_stats.loyer_haut_m2,
@@ -192,13 +244,14 @@ class RentAnalyzer:
             return pd.DataFrame()
 
         df = pd.DataFrame(comparisons)
-        return df.sort_values("loyer_moyen_m2", ascending=False)
+        return df.sort_values(["commune", "type_bien", "loyer_moyen_m2"], ascending=[True, True, False])
 
     def get_top_cities(
         self, 
         n: int = 10, 
         department_code: Optional[str] = None,
-        ascending: bool = False
+        ascending: bool = False,
+        property_type: Optional[str] = None
     ) -> pd.DataFrame:
         """
         Récupère les villes avec les loyers les plus élevés/bas.
@@ -207,6 +260,7 @@ class RentAnalyzer:
             n: Nombre de villes à retourner
             department_code: Filtrer par département (optionnel)
             ascending: Si True, retourne les loyers les plus bas
+            property_type: Type de bien (« appartements », « maisons », ou None)
 
         Returns:
             DataFrame des top villes
@@ -215,21 +269,38 @@ class RentAnalyzer:
 
         if department_code:
             data = data[data["DEP"] == department_code].copy()
+        
+        if property_type and "type_bien" in data.columns:
+            data = data[data["type_bien"] == property_type].copy()
 
         # Trier par loyer moyen
         sorted_data = data.sort_values("loypredm2", ascending=ascending).head(n)
 
         # Sélectionner les colonnes pertinentes
-        result = sorted_data[[
+        columns_to_select = [
             "LIBGEO", "INSEE_C", "DEP", "loypredm2", 
             "lwr_IPm2", "upr_IPm2", "TYPPRED", "nbobs_com", "R2_adj"
-        ]].copy()
-
-        result.columns = [
-            "commune", "code_insee", "departement", "loyer_moyen_m2",
-            "loyer_bas_m2", "loyer_haut_m2", "type_prediction", 
-            "nb_observations", "r2_ajuste"
         ]
+        
+        # Ajouter type_bien si disponible
+        if "type_bien" in sorted_data.columns:
+            columns_to_select.append("type_bien")
+        
+        result = sorted_data[columns_to_select].copy()
+
+        # Renommer les colonnes
+        column_mapping = {
+            "LIBGEO": "commune",
+            "INSEE_C": "code_insee",
+            "DEP": "departement",
+            "loypredm2": "loyer_moyen_m2",
+            "lwr_IPm2": "loyer_bas_m2",
+            "upr_IPm2": "loyer_haut_m2",
+            "TYPPRED": "type_prediction",
+            "nbobs_com": "nb_observations",
+            "R2_adj": "r2_ajuste"
+        }
+        result.rename(columns=column_mapping, inplace=True)
 
         return result.reset_index(drop=True)
 
@@ -254,13 +325,13 @@ class RentAnalyzer:
         export_data = data[[
             "LIBGEO", "INSEE_C", "DEP", "EPCI", 
             "loypredm2", "lwr_IPm2", "upr_IPm2",
-            "TYPPRED", "nbobs_com", "nbobs_mail", "R2_adj"
+            "TYPPRED", "nbobs_com", "nbobs_mail", "R2_adj", "type_bien"
         ]].copy()
 
         export_data.columns = [
             "Commune", "Code INSEE", "Département", "EPCI",
             "Loyer moyen (€/m²)", "Loyer bas (€/m²)", "Loyer haut (€/m²)",
-            "Type prédiction", "Nb obs. commune", "Nb obs. maille", "R² ajusté"
+            "Type prédiction", "Nb obs. commune", "Nb obs. maille", "R² ajusté", "Type de bien"
         ]
 
         # Créer un fichier Excel avec plusieurs feuilles

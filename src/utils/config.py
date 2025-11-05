@@ -32,29 +32,39 @@ DVF_CUSTOM_URLS: dict[int, dict[str, str] | str] = {
 RENT_DATA_BASE_URL: Final[str] = "https://www.data.gouv.fr/fr/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/"
 RENT_YEARS_AVAILABLE: Final[list[int]] = [2024]  # Carte des loyers disponible pour 2024
 
-# URL directe du fichier CSV de la Carte des loyers 2024
-# Note: Cette URL peut changer. Vérifiez sur data.gouv.fr si le téléchargement échoue
-# Pour trouver la bonne URL:
+# URLs des fichiers CSV de la Carte des loyers 2024
+# Note: À partir de 2024, les données sont séparées en 2 fichiers (appartements et maisons)
+# Pour trouver les bonnes URLs:
 # 1. Allez sur https://www.data.gouv.fr/fr/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/
-# 2. Cliquez sur le fichier CSV dans la liste des ressources
+# 2. Cliquez sur chaque fichier CSV dans la liste des ressources
 # 3. Copiez l'URL du bouton "Télécharger"
-RENT_CSV_URL_2024: Final[str] = (
-    "https://static.data.gouv.fr/resources/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/"
-    "20241001-093315/indicateurs-loyers-par-commune.csv"
+
+RENT_CSV_URL_2024_APPARTEMENTS: Final[str] = (
+    "https://static.data.gouv.fr/resources/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/20241205-153050/pred-app-mef-dhup.csv"
 )
 
-# Dictionnaire des URLs par année (à compléter au fur et à mesure)
-RENT_CSV_URLS: Final[dict[int, str]] = {
-    2024: RENT_CSV_URL_2024,
-    # 2025: "URL_A_AJOUTER",  # À compléter quand disponible
+RENT_CSV_URL_2024_MAISONS: Final[str] = (
+    "https://static.data.gouv.fr/resources/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/20241205-145700/pred-mai-mef-dhup.csv"
+)
+
+# Dictionnaire des URLs par année et type de bien
+# Format: {year: {"appartements": url, "maisons": url} ou str pour fichier unique}
+RENT_CSV_URLS: Final[dict[int, dict[str, str] | str]] = {
+    2024: {
+        "appartements": RENT_CSV_URL_2024_APPARTEMENTS,
+        "maisons": RENT_CSV_URL_2024_MAISONS,
+    },
+    # 2025: {"appartements": "URL_APPART", "maisons": "URL_MAISONS"},  # À compléter
 }
 
 # Configuration personnalisée pour les URLs de loyers
 # Permet de surcharger les URLs par défaut
-RENT_CUSTOM_URLS: dict[int, str] = {
-    # Exemple:
-    # 2024: "https://mon-serveur.com/loyers_2024.csv",
-    # 2025: "https://mon-serveur.com/loyers_2025.csv",
+# Peut être une string (fichier unique) ou un dict (appartements/maisons séparés)
+RENT_CUSTOM_URLS: dict[int, dict[str, str] | str] = {
+    # Exemple pour un fichier unique:
+    # 2023: "https://mon-serveur.com/loyers_2023.csv",
+    # Exemple pour fichiers séparés:
+    # 2024: {"appartements": "https://...", "maisons": "https://..."},
 }
 
 # Départements Île-de-France
