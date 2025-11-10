@@ -68,6 +68,11 @@ class PriceAnalyzer:
             prix_max_m2=float(city_df["prix_m2"].max()),
             nombre_transactions=len(city_df),
             surface_moyenne=float(city_df["surface_reelle_bati"].mean()),
+            nombre_t1=int((city_df["nombre_pieces_principales"] == 1).sum()),
+            nombre_t2=int((city_df["nombre_pieces_principales"] == 2).sum()),
+            nombre_t3=int((city_df["nombre_pieces_principales"] == 3).sum()),
+            nombre_t4=int((city_df["nombre_pieces_principales"] == 4).sum()),
+            nombre_t5_plus=int((city_df["nombre_pieces_principales"] >= 5).sum())
         )
 
         # Statistiques par type de bien si disponible
@@ -81,6 +86,11 @@ class PriceAnalyzer:
                     prix_max_m2=float(apparts["prix_m2"].max()),
                     nombre_transactions=len(apparts),
                     surface_moyenne=float(apparts["surface_reelle_bati"].mean()),
+                    nombre_t1=int((apparts["nombre_pieces_principales"] == 1).sum()),
+                    nombre_t2=int((apparts["nombre_pieces_principales"] == 2).sum()),
+                    nombre_t3=int((apparts["nombre_pieces_principales"] == 3).sum()),
+                    nombre_t4=int((apparts["nombre_pieces_principales"] == 4).sum()),
+                    nombre_t5_plus=int((apparts["nombre_pieces_principales"] >= 5).sum())
                 )
 
             # Maisons
@@ -92,6 +102,11 @@ class PriceAnalyzer:
                     prix_max_m2=float(maisons["prix_m2"].max()),
                     nombre_transactions=len(maisons),
                     surface_moyenne=float(maisons["surface_reelle_bati"].mean()),
+                    nombre_t1=int((maisons["nombre_pieces_principales"] == 1).sum()),
+                    nombre_t2=int((maisons["nombre_pieces_principales"] == 2).sum()),
+                    nombre_t3=int((maisons["nombre_pieces_principales"] == 3).sum()),
+                    nombre_t4=int((maisons["nombre_pieces_principales"] == 4).sum()),
+                    nombre_t5_plus=int((maisons["nombre_pieces_principales"] >= 5).sum())
                 )
 
         return stats
@@ -126,6 +141,11 @@ class PriceAnalyzer:
                     "prix_max_m2": stats.prix_max_m2,
                     "nombre_transactions": stats.nombre_transactions,
                     "surface_moyenne": stats.surface_moyenne,
+                    "nombre_t1": stats.nombre_t1,
+                    "nombre_t2": stats.nombre_t2,
+                    "nombre_t3": stats.nombre_t3,
+                    "nombre_t4": stats.nombre_t4,
+                    "nombre_t5_plus": stats.nombre_t5_plus,
                 }
 
                 # Ajouter les statistiques des appartements
@@ -136,6 +156,11 @@ class PriceAnalyzer:
                         "appart_prix_max_m2": stats.appartements.prix_max_m2,
                         "appart_nb_transactions": stats.appartements.nombre_transactions,
                         "appart_surface_moyenne": stats.appartements.surface_moyenne,
+                        "appart_nombre_t1": stats.appartements.nombre_t1,
+                        "appart_nombre_t2": stats.appartements.nombre_t2,
+                        "appart_nombre_t3": stats.appartements.nombre_t3,
+                        "appart_nombre_t4": stats.appartements.nombre_t4,
+                        "appart_nombre_t5_plus": stats.appartements.nombre_t5_plus,
                     })
                 else:
                     result.update({
@@ -154,6 +179,11 @@ class PriceAnalyzer:
                         "maison_prix_max_m2": stats.maisons.prix_max_m2,
                         "maison_nb_transactions": stats.maisons.nombre_transactions,
                         "maison_surface_moyenne": stats.maisons.surface_moyenne,
+                        "maison_nombre_t1": stats.maisons.nombre_t1,
+                        "maison_nombre_t2": stats.maisons.nombre_t2,
+                        "maison_nombre_t3": stats.maisons.nombre_t3,
+                        "maison_nombre_t4": stats.maisons.nombre_t4,
+                        "maison_nombre_t5_plus": stats.maisons.nombre_t5_plus,
                     })
                 else:
                     result.update({

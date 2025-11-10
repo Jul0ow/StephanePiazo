@@ -40,7 +40,9 @@ RENT_YEARS_AVAILABLE: Final[list[int]] = [2024]  # Carte des loyers disponible p
 # 3. Copiez l'URL du bouton "Télécharger"
 
 RENT_CSV_URL_2024_APPARTEMENTS: Final[str] = (
-    "https://static.data.gouv.fr/resources/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/20241205-153050/pred-app-mef-dhup.csv"
+    #"https://static.data.gouv.fr/resources/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/20241205-153050/pred-app-mef-dhup.csv"
+    #"https://static.data.gouv.fr/resources/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/20241205-153048/pred-app12-mef-dhup.csv"
+    "https://static.data.gouv.fr/resources/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/20241205-145658/pred-app3-mef-dhup.csv"
 )
 
 RENT_CSV_URL_2024_MAISONS: Final[str] = (

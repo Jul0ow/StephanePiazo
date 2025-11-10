@@ -12,6 +12,11 @@ class PropertyTypeStats:
     prix_min_m2: Optional[float] = None
     prix_max_m2: Optional[float] = None
     nombre_transactions: int = 0
+    nombre_t1: int = 0
+    nombre_t2: int = 0
+    nombre_t3: int = 0
+    nombre_t4: int = 0
+    nombre_t5_plus: int = 0
     surface_moyenne: Optional[float] = None
 
     def __repr__(self) -> str:
@@ -64,6 +69,11 @@ class CityStats:
     prix_min_m2: float
     prix_max_m2: float
     nombre_transactions: int
+    nombre_t1: int
+    nombre_t2: int
+    nombre_t3: int
+    nombre_t4: int
+    nombre_t5_plus: int
     surface_moyenne: float
     appartements: Optional[PropertyTypeStats] = None
     maisons: Optional[PropertyTypeStats] = None

@@ -166,6 +166,24 @@ def analyze_rent_data(year: int) -> bool:
         logger.error(f"❌ Erreur lors de l'analyse des loyers: {e}")
         return False
 
+# Pour l'instant cette fonction permet d'afficher les statistiques des ventes par villes et par nombre de pièces
+def analyze_combined2(dvf_year: int, rent_year: int) -> bool:
+    """Analyse combinée des données de ventes et de loyers."""
+    logger.info(f"📊 Analyse combinée: Ventes {dvf_year} + Loyers {rent_year}...")
+    try:
+        # Créer l'analyseur combiné
+        combined = CombinedAnalyzer(dvf_year=dvf_year, rent_year=rent_year)
+
+        # Charger les données DVF
+        combined.price_analyzer.load_data(year=dvf_year)
+
+        dvf_stats = combined.price_analyzer.analyze_all_cities()
+        combined.price_analyzer.export_analysis(dvf_stats, filename=f"analyse_ventes_idf_{dvf_year}_detailed.xlsx")
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de l'analyse combinée: {e}")
+        traceback.print_exc()
+        return False
+    return True
 
 def analyze_combined(dvf_year: int, rent_year: int) -> bool:
     """Analyse combinée des données de ventes et de loyers."""
@@ -394,6 +412,12 @@ def main():
         help="Analyser les données combinées (ventes + loyers)"
     )
     parser.add_argument(
+        "--analyze-combined2", 
+        action="store_true", 
+        help="Analyser les données combinées (ventes + loyers) - version 2"
+    )
+
+    parser.add_argument(
         "--full-pipeline", 
         action="store_true", 
         help="Exécuter le pipeline complet (ventes + loyers)"
@@ -404,7 +428,7 @@ def main():
     # Si aucune action spécifiée, afficher l'aide
     if not any([
         args.download, args.download_rent, args.clean, 
-        args.analyze, args.analyze_rent, args.analyze_combined,
+        args.analyze, args.analyze_rent, args.analyze_combined, args.analyze_combined2,
         args.full_pipeline
     ]):
         parser.print_help()
@@ -435,7 +459,7 @@ def main():
             sys.exit(1)
 
         # Analyse combinée
-        success = analyze_combined(args.year, args.rent_year)
+        success = analyze_combined2(args.year, args.rent_year)
         if not success:
             sys.exit(1)
 
@@ -468,6 +492,11 @@ def main():
 
         if args.analyze_combined:
             success = analyze_combined(args.year, args.rent_year)
+            if not success:
+                sys.exit(1)
+
+        if args.analyze_combined2:
+            success = analyze_combined2(args.year, args.rent_year)
             if not success:
                 sys.exit(1)
 
